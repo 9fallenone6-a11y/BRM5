@@ -1,82 +1,109 @@
--- GUI Module (LinoriaLib Version)
--- Creates and manages a professional exploit-style user interface
+-- GUI Module (Rayfield Version)
+-- Creates and manages a professional user interface using Rayfield UI Library
 
 local GUI = {}
-GUI.Library = nil
+GUI.Rayfield = nil
+GUI.Window = nil
 
 function GUI:init(services, config, callbacks)
-    -- 1. Load LinoriaLib and Addons
-    local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
-    local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
-    local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-    local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
-    
-    self.Library = Library
+    -- 1. Load Rayfield Library safely
+    local success, Rayfield = pcall(function()
+        return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    end)
 
-    -- 2. Create the Main Window
-    local Window = Library:CreateWindow({
-        Title = 'BRM5 v7.0 PVE | Linoria',
-        Center = true,
-        AutoShow = config.guiVisible,
-        TabPadding = 8,
-        MenuFadeTime = 0.2
+    if not success or not Rayfield then
+        warn("[GUI] Failed to load Rayfield UI library.")
+        return
+    end
+
+    self.Rayfield = Rayfield
+
+    -- 2. Create Window
+    local Window = Rayfield:CreateWindow({
+        Name = "SYSTEM24 // BRM5 v7.0 PVE",
+        Icon = 0,
+        LoadingTitle = "BRM5 Interface Suite",
+        LoadingSubtitle = "by system24",
+        Theme = "Default", 
+        
+        DisableRayfieldPrompts = false,
+        DisableBuildWarnings = false,
+
+        ConfigurationSaving = {
+            Enabled = true,
+            FolderName = "BRM5_Script",
+            FileName = "BRM5_Config"
+        },
+
+        Discord = {
+            Enabled = false,
+            Invite = "noinvitelink",
+            RememberJoins = true
+        },
+
+        KeySystem = false,
     })
 
+    self.Window = Window
+
     -- 3. Setup Tabs
-    local Tabs = {
-        Combat = Window:AddTab('Combat'),
-        Visuals = Window:AddTab('Visuals'),
-        Weapons = Window:AddTab('Weapons'),
-        Settings = Window:AddTab('Settings') -- Consolidated Colors/Credits into Settings
-    }
+    local TabCombat = Window:CreateTab("Combat", 4483362458)
+    local TabVisuals = Window:CreateTab("Visuals", 4483362458)
+    local TabWeapons = Window:CreateTab("Weapons", 4483362458)
+    local TabSettings = Window:CreateTab("Settings", 4483362458)
 
     -- ====================
     -- COMBAT TAB
     -- ====================
-    local CombatMain = Tabs.Combat:AddLeftGroupbox('Target Modification')
-    
-    CombatMain:AddToggle('SizingEnabled', {
-        Text = 'Silent Target',
-        Default = config.sizingEnabled or false,
-        Tooltip = 'Adjusts NPC target bounds',
+    TabCombat:CreateSection("Target Settings")
+
+    TabCombat:CreateToggle({
+        Name = "Silent Target",
+        CurrentValue = config.sizingEnabled or false,
+        Flag = "SilentTargetToggle",
         Callback = function(Value)
             if callbacks.onSizingToggle then callbacks.onSizingToggle(Value) end
-        end
+        end,
     })
 
-    CombatMain:AddToggle('ShowHitBox', {
-        Text = 'Show HitBox',
-        Default = config.showTargetBox or false,
+    TabCombat:CreateToggle({
+        Name = "Show HitBox",
+        CurrentValue = config.showTargetBox or false,
+        Flag = "ShowHitBoxToggle",
         Callback = function(Value)
             if callbacks.onShowTargetBoxToggle then callbacks.onShowTargetBoxToggle(Value) end
-        end
+        end,
     })
 
     -- ====================
     -- VISUALS TAB
     -- ====================
-    local EspGroup = Tabs.Visuals:AddLeftGroupbox('ESP & Lighting')
-    
-    -- Combines your Highlight toggle with your Color Sliders using inline color pickers
-    EspGroup:AddToggle('HighlightEnabled', {
-        Text = 'ESP / Wallhack',
-        Default = config.highlightEnabled or false,
+    TabVisuals:CreateSection("ESP & Lighting")
+
+    TabVisuals:CreateToggle({
+        Name = "ESP / Wallhack",
+        CurrentValue = config.highlightEnabled or false,
+        Flag = "ESPToggle",
         Callback = function(Value)
             if callbacks.onHighlightsToggle then callbacks.onHighlightsToggle(Value) end
-        end
-    }):AddColorPicker('VisibleColor', {
-        Default = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
-        Title = 'Visible ESP Color',
-        Transparency = 0,
+        end,
+    })
+
+    TabVisuals:CreateColorPicker({
+        Name = "Visible ESP Color",
+        Color = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
+        Flag = "VisibleColorPicker",
         Callback = function(Value)
             if callbacks.onVisibleRChange then callbacks.onVisibleRChange(math.floor(Value.R * 255)) end
             if callbacks.onVisibleGChange then callbacks.onVisibleGChange(math.floor(Value.G * 255)) end
             if callbacks.onVisibleBChange then callbacks.onVisibleBChange(math.floor(Value.B * 255)) end
         end
-    }):AddColorPicker('HiddenColor', {
-        Default = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
-        Title = 'Hidden ESP Color',
-        Transparency = 0,
+    })
+
+    TabVisuals:CreateColorPicker({
+        Name = "Hidden ESP Color",
+        Color = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
+        Flag = "HiddenColorPicker",
         Callback = function(Value)
             if callbacks.onHiddenRChange then callbacks.onHiddenRChange(math.floor(Value.R * 255)) end
             if callbacks.onHiddenGChange then callbacks.onHiddenGChange(math.floor(Value.G * 255)) end
@@ -84,116 +111,113 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    EspGroup:AddToggle('FullBright', {
-        Text = 'FullBright Light',
-        Default = config.fullBrightEnabled or false,
+    TabVisuals:CreateToggle({
+        Name = "FullBright Light",
+        CurrentValue = config.fullBrightEnabled or false,
+        Flag = "FullBrightToggle",
         Callback = function(Value)
             if callbacks.onFullBrightToggle then callbacks.onFullBrightToggle(Value) end
-        end
+        end,
     })
-    
-    local PerformanceGroup = Tabs.Visuals:AddRightGroupbox('Optimization')
-    
-    PerformanceGroup:AddSlider('NPCRange', {
-        Text = 'NPC Range',
-        Default = config.npcDetectionRadius or 1000,
-        Min = 0,
-        Max = config.MAX_NPC_DETECTION_RADIUS or 5000,
-        Rounding = 0,
-        Compact = false,
+
+    TabVisuals:CreateSection("Performance")
+
+    TabVisuals:CreateSlider({
+        Name = "NPC Range",
+        Range = {0, config.MAX_NPC_DETECTION_RADIUS or 5000},
+        Increment = 50,
+        Suffix = " studs",
+        CurrentValue = config.npcDetectionRadius or 1000,
+        Flag = "NPCRangeSlider",
         Callback = function(Value)
             if callbacks.onNPCDetectionRadiusChange then callbacks.onNPCDetectionRadiusChange(Value) end
-        end
+        end,
     })
-    PerformanceGroup:AddLabel('Lower range if experiencing FPS drops.'):SetStyle('Secondary')
+
+    TabVisuals:CreateParagraph({
+        Title = "Optimization Tip", 
+        Content = "If experiencing FPS drops, lower NPC Range. Gradually increase until optimal performance is achieved."
+    })
 
     -- ====================
     -- WEAPONS TAB
     -- ====================
-    local WeaponMods = Tabs.Weapons:AddLeftGroupbox('Gun Mods')
-    
-    WeaponMods:AddLabel('! RESET CHAR TO APPLY !')
-    
-    WeaponMods:AddToggle('NoRecoil', {
-        Text = 'No Recoil',
-        Default = config.patchOptions and config.patchOptions.recoil or false,
+    TabWeapons:CreateSection("Gun Modifiers")
+
+    TabWeapons:CreateParagraph({
+        Title = "Notice",
+        Content = "! RESET CHAR TO APPLY !"
+    })
+
+    TabWeapons:CreateToggle({
+        Name = "No Recoil",
+        CurrentValue = config.patchOptions and config.patchOptions.recoil or false,
+        Flag = "NoRecoilToggle",
         Callback = function(Value)
             if callbacks.onStabilityToggle then callbacks.onStabilityToggle(Value) end
-        end
+        end,
     })
-    
-    WeaponMods:AddToggle('AllFiremodes', {
-        Text = 'All Firemodes',
-        Default = config.patchOptions and config.patchOptions.firemodes or false,
+
+    TabWeapons:CreateToggle({
+        Name = "All Firemodes",
+        CurrentValue = config.patchOptions and config.patchOptions.firemodes or false,
+        Flag = "AllFiremodesToggle",
         Callback = function(Value)
             if callbacks.onFiremodeOptionsToggle then callbacks.onFiremodeOptionsToggle(Value) end
-        end
+        end,
     })
 
     -- ====================
-    -- SETTINGS & CONFIG TAB
+    -- SETTINGS TAB
     -- ====================
-    local MenuGroup = Tabs.Settings:AddLeftGroupbox('Menu Options')
-    
-    MenuGroup:AddButton('Unload Script', function()
-        Library:Unload()
-        if callbacks.onUnload then callbacks.onUnload() end
-    end)
-    
-    -- Sets up the UI toggle key (Default: Right Shift)
-    MenuGroup:AddLabel('Menu Bind'):AddKeyPicker('MenuKeybind', { Default = 'RightShift', NoUI = true, Text = 'Menu keybind' })
-    Library.ToggleKeybind = Options.MenuKeybind 
-    
-    local CreditsGroup = Tabs.Settings:AddRightGroupbox('Credits & Links')
-    CreditsGroup:AddLabel('SYSTEM24 // BRM5 v7.0 PVE')
-    CreditsGroup:AddButton('Copy Discord Link', function()
-        if type(setclipboard) == "function" then
-            setclipboard("https://discord.gg/yourlink")
-            Library:Notify("Invite copied to clipboard!")
-        else
-            Library:Notify("Your executor does not support setclipboard.", 3)
-        end
-    end)
+    TabSettings:CreateSection("Menu Control")
 
-    -- 4. Setup Theme and Save Managers (The Customizability)
-    ThemeManager:SetLibrary(Library)
-    SaveManager:SetLibrary(Library)
+    TabSettings:CreateButton({
+        Name = "Unload Script",
+        Callback = function()
+            Rayfield:Destroy()
+            if callbacks.onUnload then callbacks.onUnload() end
+        end,
+    })
 
-    -- Ignore the menu keybind so it doesn't get overwritten by configs
-    SaveManager:IgnoreThemeSettings()
-    SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+    TabSettings:CreateSection("Credits & Links")
     
-    -- Creates folders in your workspace for saving configs/themes
-    ThemeManager:SetFolder('BRM5_Script')
-    SaveManager:SetFolder('BRM5_Script/main')
+    TabSettings:CreateButton({
+        Name = "Copy Discord Link",
+        Callback = function()
+            if type(setclipboard) == "function" then
+                setclipboard("https://discord.gg/yourlink")
+                Rayfield:Notify({
+                    Title = "Clipboard",
+                    Content = "Invite link copied successfully!",
+                    Duration = 3,
+                    Image = 4483362458
+                })
+            else
+                Rayfield:Notify({
+                    Title = "Clipboard Error",
+                    Content = "Executor does not support setclipboard.",
+                    Duration = 3,
+                    Image = 4483362458
+                })
+            end
+        end,
+    })
 
-    -- Builds the actual UI sections in the Settings tab
-    SaveManager:BuildConfigSection(Tabs.Settings)
-    ThemeManager:BuildThemeSection(Tabs.Settings)
-    
-    -- Load the user's custom theme automatically
-    ThemeManager:ApplyToTab(Tabs.Settings)
-    
-    Library:Notify('BRM5 Script Loaded Successfully!', 3)
-end
-
-function GUI:toggleVisibility()
-    if self.Library then
-        self.Library:Toggle()
-    end
+    Rayfield:LoadConfiguration()
 end
 
 function GUI:setVisibleState(isVisible)
-    -- Linoria handles internal state via Library:Toggle()
-    -- We can sync it if the script forces a state externally:
-    if self.Library and self.Library.Keybit ~= isVisible then
-        self.Library:Toggle()
-    end
+    -- Rayfield manages visibility internally via keybinds or explicit calls
+end
+
+function GUI:toggleVisibility()
+    -- Rayfield handles visibility globally via its toggle bind/key
 end
 
 function GUI:destroy()
-    if self.Library then
-        self.Library:Unload()
+    if self.Rayfield then
+        self.Rayfield:Destroy()
     end
 end
 
