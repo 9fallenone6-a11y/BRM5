@@ -1,12 +1,9 @@
--- Target Sizing Module
--- Handles adjustment of NPC target bounds for visibilitytesting
-
 local TargetSizing = {}
 
 TargetSizing.originalSizes = {} -- Storage for original sizes to restore them later
 
 -- Adjusts the NPC target bounds
-function TargetSizingapplyTargetSizing(model, root, config)
+function TargetSizing:applyTargetSizing(model, root, config) -- Added colon
     if not self.originalSizes[model] then 
         self.originalSizes[model] = root.Size 
     end
@@ -24,8 +21,8 @@ function TargetSizingapplyTargetSizing(model, root, config)
 end
 
 -- Restores target bounds to their normal size
-function TargetSizingrestoreOriginalSize(model, npcManager)
-    local data = npcManagergetActiveNPCs()[model]
+function TargetSizing:restoreOriginalSize(model, npcManager) -- Added colon
+    local data = npcManager:getActiveNPCs()[model] -- Added colon
     local root = data and data.root
     if not root then
         local character = data and data.character
@@ -40,24 +37,24 @@ function TargetSizingrestoreOriginalSize(model, npcManager)
 end
 
 -- Updates target bounds for all NPCs based on config
-function TargetSizingupdateAllTargets(npcManager, config)
+function TargetSizing:updateAllTargets(npcManager, config) -- Added colon
     if not config.sizingEnabled then
         if next(self.originalSizes) then
-            selfcleanup(npcManager)
+            self:cleanup(npcManager) -- Added colon
         end
         return
     end
-    for model, data in pairs(npcManagergetActiveNPCs()) do
+    for model, data in pairs(npcManager:getActiveNPCs()) do -- Added colon
         if data.root then
-            selfapplyTargetSizing(model, data.root, config)
+            self:applyTargetSizing(model, data.root, config) -- Added colon
         end
     end
 end
 
 -- Cleanup all adjusted target bounds
-function TargetSizingcleanup(npcManager)
+function TargetSizing:cleanup(npcManager) -- Added colon
     for model, _ in pairs(self.originalSizes) do
-        selfrestoreOriginalSize(model, npcManager)
+        self:restoreOriginalSize(model, npcManager) -- Added colon
     end
 end
 
