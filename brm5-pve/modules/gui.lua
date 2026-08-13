@@ -20,10 +20,10 @@ function GUI:init(services, config, callbacks)
 
     -- 2. Create Window
     local Window = Rayfield:CreateWindow({
-        Name = "SYSTEM24 // BRM5 v7.0 PVE",
+        Name = "Blackhawk Rescue Mission 5",
         Icon = 0,
-        LoadingTitle = "BRM5 Interface Suite",
-        LoadingSubtitle = "by system24",
+        LoadingTitle = "Blackhawk Rescue Mission 5",
+        LoadingSubtitle = "by 9fallenone6",
         Theme = "Default", 
         
         DisableRayfieldPrompts = false,
@@ -112,7 +112,7 @@ function GUI:init(services, config, callbacks)
     })
 
     TabVisuals:CreateToggle({
-        Name = "FullBright Light",
+        Name = "Fullbight",
         CurrentValue = config.fullBrightEnabled or false,
         Flag = "FullBrightToggle",
         Callback = function(Value)
@@ -146,7 +146,7 @@ function GUI:init(services, config, callbacks)
 
     TabWeapons:CreateParagraph({
         Title = "Notice",
-        Content = "! RESET CHAR TO APPLY !"
+        Content = "Reset character to apply!"
     })
 
     TabWeapons:CreateToggle({
