@@ -24,7 +24,7 @@ local function loadPvp()
 end
 
 local function loadPve()
-    loadRemoteScript("https://raw.githubusercontent.com/9fallenone6-a11y/BRM5/refs/heads/main/brm5-pve/main.lua")
+    loadRemoteScript("https://raw.githubusercontent.com/9fallenone6-a11y/BRM5/main/brm5-pve/main.lua")
 end
 
 if PVP_PLACE_IDS[placeId] then
