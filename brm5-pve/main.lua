@@ -256,10 +256,14 @@ table.insert(runtimeConnections, Services.RunService.Heartbeat:Connect(function(
     end
 
     targetAccumulator = targetAccumulator + dt
-    if targetAccumulator >= Config.TARGET_SYNC_INTERVAL then
+if targetAccumulator >= Config.TARGET_SYNC_INTERVAL then
+    if TargetSizing and type(TargetSizing.updateAllTargets) == "function" then
         TargetSizing:updateAllTargets(NPCManager, Config)
-        targetAccumulator = 0
+    else
+        warn("TargetSizing is missing or updateAllTargets is not defined!")
     end
+    targetAccumulator = 0
+end
 end))
 
 table.insert(runtimeConnections, Services.UserInputService.InputBegan:Connect(function(input, gameProcessed)
