@@ -1,5 +1,5 @@
--- GUI Module
--- Creates and manages the user interface
+-- GUI Module (system24 TUI Theme)
+-- Creates and manages the user interface with a retro Terminal/TUI aesthetic
 
 local GUI = {}
 
@@ -11,18 +11,48 @@ GUI.toggleButton = nil
 GUI.tabButtons = {}
 GUI.tabs = {}
 
+-- system24 Theme Palette
+local THEME = {
+    -- Text Colors
+    TextPrimary   = Color3.fromRGB(242, 242, 242), -- --text-1 (OKLCH 95%)
+    TextSecondary = Color3.fromRGB(191, 191, 191), -- --text-3 (OKLCH 75%)
+    TextMuted     = Color3.fromRGB(102, 102, 102), -- --text-5 (OKLCH 40%)
+    TextActive    = Color3.fromRGB(25, 25, 25),    -- Text on active elements
+    
+    -- Surface & Background Colors
+    MainBG        = Color3.fromRGB(25, 25, 25),    -- --bg-4 (OKLCH 19%)
+    PanelBG       = Color3.fromRGB(33, 33, 33),    -- --bg-3 (OKLCH 23%)
+    ButtonBG      = Color3.fromRGB(41, 41, 41),    -- --bg-2 (OKLCH 27%)
+    ButtonHover   = Color3.fromRGB(50, 50, 50),
+    
+    -- Accent Colors (system24 Purple & Accent New)
+    Accent        = Color3.fromRGB(198, 120, 221), -- --purple-2 (OKLCH 70% 0.12 310)
+    AccentDark    = Color3.fromRGB(156, 82, 181),  -- --purple-4
+    Green         = Color3.fromRGB(98, 209, 150),  -- --green-2 (OKLCH 70% 0.12 170)
+    Red           = Color3.fromRGB(224, 108, 117), -- --red-2 / --accent-new
+    
+    -- Borders & Outlines
+    Border        = Color3.fromRGB(60, 60, 60),    -- --border
+    BorderActive  = Color3.fromRGB(198, 120, 221), -- --border-hover (--accent-2)
+    
+    -- Fonts
+    FontMono      = Enum.Font.Code,
+    FontHeader    = Enum.Font.RobotoMono
+}
+
 -- Creates a new tab page
 local function createTab(container)
     local f = Instance.new("ScrollingFrame", container)
     f.Size = UDim2.new(1, 0, 1, 0)
     f.BackgroundTransparency = 1
     f.Visible = false
-    f.ScrollBarThickness = 2
+    f.ScrollBarThickness = 3
+    f.ScrollBarImageColor3 = THEME.Accent
     f.CanvasSize = UDim2.new(0, 0, 0, 0)
     f.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
     local l = Instance.new("UIListLayout", f)
-    l.Padding = UDim.new(0, 12)
+    l.Padding = UDim.new(0, 8)
     l.HorizontalAlignment = Enum.HorizontalAlignment.Center
     l.SortOrder = Enum.SortOrder.LayoutOrder
 
@@ -32,30 +62,51 @@ end
 -- Creates a toggle button
 local function createButton(parent, text, initialActive, callback)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -10, 0, 35)
-    btn.BackgroundColor3 = initialActive and Color3.fromRGB(85, 170, 255) or Color3.fromRGB(35, 35, 35)
-    btn.Text = text
-    btn.TextColor3 = initialActive and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
-    btn.Font = "Gotham"
+    btn.Size = UDim2.new(1, -10, 0, 32)
+    btn.BackgroundColor3 = initialActive and THEME.Accent or THEME.ButtonBG
+    btn.Text = (initialActive and "[X] " or "[ ] ") .. text
+    btn.TextColor3 = initialActive and THEME.TextActive or THEME.TextPrimary
+    btn.Font = THEME.FontMono
     btn.TextSize = 13
-    Instance.new("UICorner", btn)
+    btn.AutoButtonColor = false
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = initialActive and THEME.Accent or THEME.Border
+    stroke.Thickness = 1
     
     local active = initialActive and true or false
     btn.MouseButton1Click:Connect(function()
         active = not active
-        btn.BackgroundColor3 = active and Color3.fromRGB(85, 170, 255) or Color3.fromRGB(35, 35, 35)
-        btn.TextColor3 = active and Color3.new(0, 0, 0) or Color3.new(1, 1, 1)
+        btn.BackgroundColor3 = active and THEME.Accent or THEME.ButtonBG
+        btn.Text = (active and "[X] " or "[ ] ") .. text
+        btn.TextColor3 = active and THEME.TextActive or THEME.TextPrimary
+        stroke.Color = active and THEME.Accent or THEME.Border
         callback(active)
+    end)
+
+    btn.MouseEnter:Connect(function()
+        if not active then
+            btn.BackgroundColor3 = THEME.ButtonHover
+            stroke.Color = THEME.BorderActive
+        end
+    end)
+
+    btn.MouseLeave:Connect(function()
+        if not active then
+            btn.BackgroundColor3 = THEME.ButtonBG
+            stroke.Color = THEME.Border
+        end
     end)
 end
 
 -- Creates a label
 local function createLabel(parent, text, color, layoutIndex)
     local lbl = Instance.new("TextLabel", parent)
-    lbl.Size = UDim2.new(1, -10, 0, 30)
+    lbl.Size = UDim2.new(1, -10, 0, 24)
     lbl.Text = text
-    lbl.TextColor3 = color
-    lbl.Font = "GothamBold"
+    lbl.TextColor3 = color or THEME.Accent
+    lbl.Font = THEME.FontHeader
+    lbl.TextSize = 13
     lbl.BackgroundTransparency = 1
     if layoutIndex then
         lbl.LayoutOrder = layoutIndex
@@ -65,11 +116,11 @@ end
 
 local function createInfoLabel(parent, text)
     local lbl = Instance.new("TextLabel", parent)
-    lbl.Size = UDim2.new(1, -10, 0, 74)
-    lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(185, 185, 185)
-    lbl.Font = "Gotham"
-    lbl.TextSize = 12
+    lbl.Size = UDim2.new(1, -10, 0, 54)
+    lbl.Text = "// " .. text
+    lbl.TextColor3 = THEME.TextMuted
+    lbl.Font = THEME.FontMono
+    lbl.TextSize = 11
     lbl.TextWrapped = true
     lbl.TextXAlignment = "Left"
     lbl.TextYAlignment = "Top"
@@ -79,34 +130,41 @@ end
 
 local function updateToggleButtonText(button, isVisible)
     if button then
-        button.Text = isVisible and "Hide GUI" or "Open GUI"
+        button.Text = isVisible and "[SYS: HIDE]" or "[SYS: SHOW]"
     end
 end
 
 -- Creates a slider
 local function createSlider(parent, label, initialValue, maxValue, callback, layoutIndex, services)
     local f = Instance.new("Frame", parent)
-    f.Size = UDim2.new(1, -10, 0, 50)
+    f.Size = UDim2.new(1, -10, 0, 48)
     f.BackgroundTransparency = 1
     if layoutIndex then
         f.LayoutOrder = layoutIndex
     end
 
     local l = Instance.new("TextLabel", f)
-    l.Text = label .. ": " .. initialValue
-    l.Size = UDim2.new(1, 0, 0, 20)
-    l.TextColor3 = Color3.new(1, 1, 1)
+    l.Text = string.format("%s: %d / %d", label, initialValue, maxValue)
+    l.Size = UDim2.new(1, 0, 0, 18)
+    l.TextColor3 = THEME.TextSecondary
+    l.Font = THEME.FontMono
+    l.TextSize = 12
     l.BackgroundTransparency = 1
     l.TextXAlignment = "Left"
 
     local bar = Instance.new("Frame", f)
-    bar.Position = UDim2.new(0, 0, 0, 25)
-    bar.Size = UDim2.new(1, 0, 0, 8)
-    bar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    bar.Position = UDim2.new(0, 0, 0, 22)
+    bar.Size = UDim2.new(1, 0, 0, 12)
+    bar.BackgroundColor3 = THEME.PanelBG
+
+    local barStroke = Instance.new("UIStroke", bar)
+    barStroke.Color = THEME.Border
+    barStroke.Thickness = 1
 
     local fill = Instance.new("Frame", bar)
     fill.Size = UDim2.new(maxValue > 0 and (initialValue / maxValue) or 0, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
+    fill.BackgroundColor3 = THEME.Accent
+    fill.BorderSizePixel = 0
 
     local dragging = false
     local function update()
@@ -114,7 +172,7 @@ local function createSlider(parent, label, initialValue, maxValue, callback, lay
         local p = math.clamp((mousePos - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
         local val = math.floor(p * maxValue)
         fill.Size = UDim2.new(p, 0, 1, 0)
-        l.Text = label .. ": " .. val
+        l.Text = string.format("%s: %d / %d", label, val, maxValue)
         callback(val)
     end
 
@@ -166,30 +224,32 @@ function GUI:init(services, config, callbacks)
 
     local cursorIndicator = Instance.new("Frame", self.screenGui)
     cursorIndicator.Name = "CursorIndicator"
-    cursorIndicator.Size = UDim2.fromOffset(10, 10)
+    cursorIndicator.Size = UDim2.fromOffset(8, 8)
     cursorIndicator.AnchorPoint = Vector2.new(0.5, 0.5)
-    cursorIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    cursorIndicator.BackgroundColor3 = THEME.Accent
     cursorIndicator.BorderSizePixel = 0
     cursorIndicator.Visible = config.guiVisible
     cursorIndicator.ZIndex = 100
-    Instance.new("UICorner", cursorIndicator).CornerRadius = UDim.new(1, 0)
     self.cursorIndicator = cursorIndicator
 
     local cursorStroke = Instance.new("UIStroke", cursorIndicator)
-    cursorStroke.Color = Color3.fromRGB(0, 0, 0)
-    cursorStroke.Thickness = 1.5
+    cursorStroke.Color = THEME.MainBG
+    cursorStroke.Thickness = 1
 
     local toggleButton = Instance.new("TextButton", self.screenGui)
     toggleButton.Name = "GuiToggleButton"
-    toggleButton.Size = UDim2.fromOffset(110, 36)
-    toggleButton.Position = UDim2.new(0, 20, 0.5, -18)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    toggleButton.BorderSizePixel = 0
-    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleButton.Font = "GothamBold"
-    toggleButton.TextSize = 13
+    toggleButton.Size = UDim2.fromOffset(120, 32)
+    toggleButton.Position = UDim2.new(0, 20, 0.5, -16)
+    toggleButton.BackgroundColor3 = THEME.MainBG
+    toggleButton.TextColor3 = THEME.Accent
+    toggleButton.Font = THEME.FontMono
+    toggleButton.TextSize = 12
     toggleButton.ZIndex = 101
-    Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 8)
+
+    local toggleStroke = Instance.new("UIStroke", toggleButton)
+    toggleStroke.Color = THEME.BorderActive
+    toggleStroke.Thickness = 2
+
     self.toggleButton = toggleButton
     updateToggleButtonText(toggleButton, config.guiVisible)
 
@@ -203,15 +263,17 @@ function GUI:init(services, config, callbacks)
 
     -- Main Window Frame
     local main = Instance.new("Frame", self.screenGui)
-    main.Size = UDim2.new(0, 500, 0, 350)
-    main.Position = UDim2.new(0.5, -250, 0.5, -175)
-    main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    main.BorderSizePixel = 0
+    main.Size = UDim2.new(0, 520, 0, 360)
+    main.Position = UDim2.new(0.5, -260, 0.5, -180)
+    main.BackgroundColor3 = THEME.MainBG
     main.Active = true
     main.Visible = config.guiVisible
     main.ZIndex = 1
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 8)
     self.mainFrame = main
+
+    local mainStroke = Instance.new("UIStroke", main)
+    mainStroke.Color = THEME.Border
+    mainStroke.Thickness = 2
 
     -- Make draggable
     local dragging, dragInput, dragStart, startPos
@@ -222,10 +284,12 @@ function GUI:init(services, config, callbacks)
     end
 
     local topBar = Instance.new("Frame", main)
-    topBar.Size = UDim2.new(1, 0, 0, 40)
-    topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    topBar.BorderSizePixel = 0
-    Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 8)
+    topBar.Size = UDim2.new(1, 0, 0, 32)
+    topBar.BackgroundColor3 = THEME.PanelBG
+
+    local topBarStroke = Instance.new("UIStroke", topBar)
+    topBarStroke.Color = THEME.Border
+    topBarStroke.Thickness = 1
 
     topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -259,32 +323,45 @@ function GUI:init(services, config, callbacks)
         end
     end)
 
-    -- Title
+    -- Title (system24 ASCII / TUI Header Style)
     local title = Instance.new("TextLabel", topBar)
     title.Size = UDim2.new(1, -20, 1, 0)
     title.Position = UDim2.new(0, 10, 0, 0)
-    title.Text = "BRM5 v7.0 🎇 PVE"
-    title.Font = "GothamBold"
-    title.TextColor3 = Color3.fromRGB(85, 170, 255)
-    title.TextSize = 16
+    title.Text = "SYSTEM24 // BRM5 v7.0 PVE"
+    title.Font = THEME.FontHeader
+    title.TextColor3 = THEME.Accent
+    title.TextSize = 13
     title.TextXAlignment = "Left"
     title.BackgroundTransparency = 1
 
     -- Sidebar
     local sidebar = Instance.new("Frame", main)
-    sidebar.Position = UDim2.new(0, 0, 0, 40)
-    sidebar.Size = UDim2.new(0, 130, 1, -40)
-    sidebar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    sidebar.BorderSizePixel = 0
+    sidebar.Position = UDim2.new(0, 0, 0, 32)
+    sidebar.Size = UDim2.new(0, 140, 1, -32)
+    sidebar.BackgroundColor3 = THEME.PanelBG
+
+    local sideStroke = Instance.new("UIStroke", sidebar)
+    sideStroke.Color = THEME.Border
+    sideStroke.Thickness = 1
 
     local sideLayout = Instance.new("UIListLayout", sidebar)
     sideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    sideLayout.Padding = UDim.new(0, 8)
+    sideLayout.Padding = UDim.new(0, 6)
+
+    -- Side Panel Label (system24 visual style)
+    local sideLabel = Instance.new("TextLabel", sidebar)
+    sideLabel.Size = UDim2.new(1, -16, 0, 24)
+    sideLabel.Text = "[NAVIGATION]"
+    sideLabel.TextColor3 = THEME.TextMuted
+    sideLabel.Font = THEME.FontMono
+    sideLabel.TextSize = 10
+    sideLabel.TextXAlignment = "Left"
+    sideLabel.BackgroundTransparency = 1
 
     -- Content Container
     local container = Instance.new("Frame", main)
-    container.Position = UDim2.new(0, 140, 0, 50)
-    container.Size = UDim2.new(1, -150, 1, -60)
+    container.Position = UDim2.new(0, 148, 0, 40)
+    container.Size = UDim2.new(1, -156, 1, -48)
     container.BackgroundTransparency = 1
 
     -- Create Tabs
@@ -306,27 +383,34 @@ function GUI:init(services, config, callbacks)
     -- Add Tab Buttons
     local function addTabBtn(name, targetTab)
         local b = Instance.new("TextButton", sidebar)
-        b.Size = UDim2.new(1, -20, 0, 35)
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        b.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-        b.Font = "GothamMedium"
-        b.TextSize = 13
-        Instance.new("UICorner", b)
+        b.Size = UDim2.new(1, -12, 0, 30)
+        b.BackgroundColor3 = THEME.ButtonBG
+        b.TextColor3 = THEME.TextSecondary
+        b.Font = THEME.FontMono
+        b.TextSize = 12
+        b.Text = "> " .. name
+        b.TextXAlignment = "Left"
+
+        local bStroke = Instance.new("UIStroke", b)
+        bStroke.Color = THEME.Border
+        bStroke.Thickness = 1
 
         self.tabButtons[name] = b
         if name == "Combat" then
-            b.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
-            b.TextColor3 = Color3.new(0, 0, 0)
+            b.BackgroundColor3 = THEME.Accent
+            b.TextColor3 = THEME.TextActive
+            bStroke.Color = THEME.Accent
         end
 
-        b.Text = name
         b.MouseButton1Click:Connect(function()
             for _, btn in pairs(self.tabButtons) do
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                btn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+                btn.BackgroundColor3 = THEME.ButtonBG
+                btn.TextColor3 = THEME.TextSecondary
+                btn:FindFirstChildOfClass("UIStroke").Color = THEME.Border
             end
-            b.BackgroundColor3 = Color3.fromRGB(85, 170, 255)
-            b.TextColor3 = Color3.new(0, 0, 0)
+            b.BackgroundColor3 = THEME.Accent
+            b.TextColor3 = THEME.TextActive
+            bStroke.Color = THEME.Accent
 
             for _, tab in pairs(self.tabs) do
                 tab.Visible = false
@@ -339,15 +423,15 @@ function GUI:init(services, config, callbacks)
     addTabBtn("Visuals", tabVisuals)
     addTabBtn("Weapons", tabWeapons)
     addTabBtn("Colors", tabColors)
-    addTabBtn("Credits and Help", tabCredits)
+    addTabBtn("Credits", tabCredits)
 
     -- COMBAT TAB
-    createButton(tabCombat, "Silent 🎯", config.sizingEnabled, callbacks.onSizingToggle)
+    createButton(tabCombat, "Silent Target", config.sizingEnabled, callbacks.onSizingToggle)
     createButton(tabCombat, "Show HitBox", config.showTargetBox, callbacks.onShowTargetBoxToggle)
 
     -- VISUALS TAB
-    createButton(tabVisuals, "Walls 🔎", config.highlightEnabled, callbacks.onHighlightsToggle)
-    createButton(tabVisuals, "FullBright 💡", config.fullBrightEnabled, callbacks.onFullBrightToggle)
+    createButton(tabVisuals, "ESP / Wallhack", config.highlightEnabled, callbacks.onHighlightsToggle)
+    createButton(tabVisuals, "FullBright Light", config.fullBrightEnabled, callbacks.onFullBrightToggle)
     createSlider(
         tabVisuals,
         "NPC Range",
@@ -359,18 +443,17 @@ function GUI:init(services, config, callbacks)
     )
     createInfoLabel(
         tabVisuals,
-        "If you're having performance issues, try lowering the NPC Range to the minimum and then gradually increasing it until you achieve good performance with the maximum possible distance."
+        "If experiencing FPS drops, lower NPC Range. Gradually increase until optimal performance is achieved."
     )
 
     -- WEAPONS TAB
-    local weaponNote = createLabel(tabWeapons, "Reset character to apply changes", 
-                                   Color3.fromRGB(255, 100, 100))
-    createButton(tabWeapons, "No recoil", config.patchOptions.recoil, callbacks.onStabilityToggle)
+    local weaponNote = createLabel(tabWeapons, "! RESET CHAR TO APPLY !", THEME.Red)
+    createButton(tabWeapons, "No Recoil", config.patchOptions.recoil, callbacks.onStabilityToggle)
     createButton(tabWeapons, "All Firemodes", config.patchOptions.firemodes, callbacks.onFiremodeOptionsToggle)
 
     -- COLORS TAB
     local layoutIndex = 1
-    createLabel(tabColors, "-- VISIBLE COLOR --", Color3.new(0.5, 1, 0.5), layoutIndex)
+    createLabel(tabColors, "--- VISIBLE COLOR ---", THEME.Green, layoutIndex)
     layoutIndex = layoutIndex + 1
     
     createSlider(tabColors, "R", config.visibleR, 255, callbacks.onVisibleRChange, layoutIndex, services)
@@ -380,7 +463,7 @@ function GUI:init(services, config, callbacks)
     createSlider(tabColors, "B", config.visibleB, 255, callbacks.onVisibleBChange, layoutIndex, services)
     layoutIndex = layoutIndex + 1
 
-    createLabel(tabColors, "-- HIDDEN COLOR --", Color3.new(1, 0.5, 0.5), layoutIndex)
+    createLabel(tabColors, "--- HIDDEN COLOR ---", THEME.Red, layoutIndex)
     layoutIndex = layoutIndex + 1
     
     createSlider(tabColors, "R", config.hiddenR, 255, callbacks.onHiddenRChange, layoutIndex, services)
@@ -390,71 +473,54 @@ function GUI:init(services, config, callbacks)
     createSlider(tabColors, "B", config.hiddenB, 255, callbacks.onHiddenBChange, layoutIndex, services)
 
     -- CREDITS TAB
-    local function addCredit(text, font, size)
-        local c = Instance.new("TextLabel", tabCredits)
-        c.Size = UDim2.new(1, -10, 0, size or 50)
-        c.Text = text
-        c.TextColor3 = Color3.new(0.9, 0.9, 0.9)
-        c.Font = font or "Gotham"
-        c.TextSize = 12
-        c.TextWrapped = true
-        c.BackgroundTransparency = 1
-    end
-    
-    local clipboardStatus = createInfoLabel(tabCredits, "Click a link to copy it to the clipboard.")
-    clipboardStatus.Size = UDim2.new(1, -10, 0, 40)
-    clipboardStatus.TextColor3 = Color3.fromRGB(140, 200, 255)
+    local clipboardStatus = createInfoLabel(tabCredits, "Select a link to copy URL to clipboard.")
+    clipboardStatus.Size = UDim2.new(1, -10, 0, 36)
+    clipboardStatus.TextColor3 = THEME.Accent
 
     local function copyToClipboard(text, label)
         if type(setclipboard) == "function" then
             local ok = pcall(setclipboard, text)
             if ok then
-                clipboardStatus.Text = "Copied to clipboard: " .. label
+                clipboardStatus.Text = "// Copied: " .. label
                 return
             end
         end
-        clipboardStatus.Text = "Clipboard is not available in this executor."
+        clipboardStatus.Text = "// Err: Clipboard unsupported by executor."
     end
 
     local function addLinkButton(label, url, accentColor)
         local btn = Instance.new("TextButton", tabCredits)
-        btn.Size = UDim2.new(1, -10, 0, 44)
-        btn.BackgroundColor3 = accentColor
-        btn.Text = label
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = "GothamBold"
-        btn.TextSize = 13
+        btn.Size = UDim2.new(1, -10, 0, 38)
+        btn.BackgroundColor3 = THEME.ButtonBG
+        btn.Text = "[LINK] " .. label
+        btn.TextColor3 = THEME.TextPrimary
+        btn.Font = THEME.FontMono
+        btn.TextSize = 12
         btn.AutoButtonColor = true
-        Instance.new("UICorner", btn)
+
+        local stroke = Instance.new("UIStroke", btn)
+        stroke.Color = accentColor or THEME.Border
+        stroke.Thickness = 1
 
         btn.MouseButton1Click:Connect(function()
             copyToClipboard(url, label)
         end)
-
-        local urlLabel = Instance.new("TextLabel", btn)
-        urlLabel.Size = UDim2.new(1, -16, 0, 16)
-        urlLabel.Position = UDim2.new(0, 8, 1, -18)
-        urlLabel.BackgroundTransparency = 1
-        urlLabel.Text = url
-        urlLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
-        urlLabel.Font = "Gotham"
-        urlLabel.TextSize = 10
     end
-
-    addCredit("Credits and Help", "GothamBold", 28)
-    addCredit("Made by: HiIxX0Dexter0XxIiH", "GothamBold", 24)
-    addLinkButton("GitHub", "https://github.com/HiIxX0Dexter0XxIiH/Roblox-Dexter-Scripts", Color3.fromRGB(45, 95, 160))
-    addLinkButton("Reddit", "https://www.reddit.com/r/BRM5Scripts/", Color3.fromRGB(185, 75, 45))
 
     -- UNLOAD BUTTON
     local unl = Instance.new("TextButton", sidebar)
-    unl.Size = UDim2.new(0, 110, 0, 35)
-    unl.AnchorPoint = Vector2.new(0.5, 0)
-    unl.Position = UDim2.new(0.5, 0, 0, 0)
-    unl.Text = "Unload Script"
-    unl.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
-    unl.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", unl)
+    unl.Size = UDim2.new(1, -12, 0, 30)
+    unl.Position = UDim2.new(0, 6, 1, -36)
+    unl.Text = "[X] UNLOAD"
+    unl.BackgroundColor3 = THEME.Red
+    unl.TextColor3 = THEME.TextActive
+    unl.Font = THEME.FontMono
+    unl.TextSize = 12
+
+    local unlStroke = Instance.new("UIStroke", unl)
+    unlStroke.Color = THEME.Red
+    unlStroke.Thickness = 1
+
     unl.MouseButton1Click:Connect(callbacks.onUnload)
 end
 
