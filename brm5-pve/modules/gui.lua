@@ -57,17 +57,8 @@ function GUI:init(services, config, callbacks)
     local mainFrame = menu.bg.bg.bg.bg.main
     mainFrame.Size = UDim2.new(0, 400, 0, 275) -- Reduced width and height to snugly fit the sections[cite: 1]
 
-    local leftCol = mainFrame.group.left
-    local rightCol = mainFrame.group.right
-
-    if leftCol and leftCol:IsA("UIListLayout") then
-        leftCol.Padding = UDim.new(0, 6)
-    end
-    if rightCol and rightCol:IsA("UIListLayout") then
-        rightCol.Padding = UDim.new(0, 6)
-    end
-
-    local columnsLayout = mainFrame.group.UIListLayout
+    local groupContainer = mainFrame.group
+    local columnsLayout = groupContainer:FindFirstChildOfClass("UIListLayout")
     if columnsLayout then
         columnsLayout.Padding = UDim.new(0, 10) -- Brought the two sections closer together[cite: 1]
     end
@@ -174,7 +165,16 @@ function GUI:init(services, config, callbacks)
 
             groupCount -= 1
 
-            groupbox.Parent = newTab[pos]
+            local targetParent = newTab:FindFirstChild(pos)
+            if not targetParent then
+                targetParent = Instance.new("Frame")
+                targetParent.Name = pos
+                targetParent.Parent = newTab
+                targetParent.BackgroundTransparency = 1
+                targetParent.Size = UDim2.new(0, 190, 1, 0)
+            end
+
+            groupbox.Parent = targetParent
             groupbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             groupbox.BorderColor3 = Color3.fromRGB(30, 30, 30)
             groupbox.BorderSizePixel = 2
