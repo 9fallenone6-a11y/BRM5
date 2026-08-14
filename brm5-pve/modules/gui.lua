@@ -1,5 +1,5 @@
--- GUI Module (Octohook Version)
--- Creates and manages user interface using Octohook UI Library
+-- GUI Module (Tokyo / Library.lua Version)
+-- Replaces Rayfield UI with single segmented tab layout
 
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -8,53 +8,50 @@ local LocalPlayer = Players.LocalPlayer
 local GUI = {}
 GUI.Library = nil
 GUI.Window = nil
-GUI.IsOpen = true -- Tracks window state to handle camera locking properly
+GUI.IsOpen = true
 
 function GUI:init(services, config, callbacks)
     config = config or {}
     callbacks = callbacks or {}
 
-    -- 1. Load Octohook Library safely
-    local success, library = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/portallol/luna/main/src/main.lua"))() 
-            or getgenv().library
+    -- 1. Load library.lua safely from repository
+    local success, libraryRaw = pcall(function()
+        return game:HttpGet("https://raw.githubusercontent.com/9fallenone6-a11y/BRM5/refs/heads/main/brm5-pve/library.lua")
     end)
 
-    if not success or not library then
-        library = getgenv().library
-    end
-
-    if not library then
-        warn("[GUI] Failed to load Octohook UI library.")
+    if not success or not libraryRaw then
+        warn("[GUI] Failed to fetch library.lua UI library from URL.")
         return
     end
 
-    self.Library = library
-    if library.init then
-        library:init()
+    local libraryFunc = loadstring(libraryRaw)
+    if not libraryFunc then
+        warn("[GUI] Failed to parse library.lua.")
+        return
     end
 
-    -- 2. Create Window
-    local Window = library.NewWindow({
-        title = "Blackhawk Rescue Mission 5",
-        size = UDim2.new(0, 550, 0, 600),
-        position = UDim2.new(0.5, -275, 0.5, -300)
-    })
+    local Library = libraryFunc({cheatname = "BRM5", gamename = "PVE"})
+    Library:init()
+    self.Library = Library
 
+    -- 2. Create Window
+    local Window = Library.NewWindow({
+        title = "Blackhawk Rescue Mission 5 | by 9fallenone6",
+        size = UDim2.new(0, 520, 0, 440)
+    })
     self.Window = Window
 
-    -- 3. Setup Tabs
-    local TabCombat = Window:AddTab("Combat")
-    local TabVisuals = Window:AddTab("Visuals")
-    local TabWeapons = Window:AddTab("Weapons")
-    local TabSettings = Window:AddTab("Settings")
+    -- 3. Single Main Tab (Segmented into Column 1 and Column 2)
+    local MainTab = Window:AddTab("  Main  ")
 
-    -- ====================
-    -- COMBAT TAB
-    -- ====================
-    local SecTarget = TabCombat:AddSection("Target Settings", 1, 1)
+    -- =========================================================================
+    -- COLUMN 1: COMBAT & WEAPONS
+    -- =========================================================================
+    
+    -- --- Combat Section ---
+    local CombatSection = MainTab:AddSection("Combat", 1)
 
-    SecTarget:AddToggle({
+    CombatSection:AddToggle({
         text = "Silent Target",
         flag = "SilentTargetToggle",
         state = config.sizingEnabled or false,
@@ -63,7 +60,7 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    SecTarget:AddToggle({
+    CombatSection:AddToggle({
         text = "Show HitBox",
         flag = "ShowHitBoxToggle",
         state = config.showTargetBox or false,
@@ -72,79 +69,12 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    -- ====================
-    -- VISUALS TAB
-    -- ====================
-    local SecESP = TabVisuals:AddSection("ESP & Lighting", 1, 1)
+    -- --- Weapons Section ---
+    local WeaponsSection = MainTab:AddSection("Weapons", 1)
 
-    SecESP:AddToggle({
-        text = "ESP / Wallhack",
-        flag = "ESPToggle",
-        state = config.highlightEnabled or false,
-        callback = function(Value)
-            if callbacks.onHighlightsToggle then callbacks.onHighlightsToggle(Value) end
-        end
-    })
+    WeaponsSection:AddText({text = "Note: Reset character to apply gun mods!"})
 
-    SecESP:AddColorPicker({
-        text = "Visible ESP Color",
-        flag = "VisibleColorPicker",
-        color = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
-        callback = function(Value)
-            if callbacks.onVisibleRChange then callbacks.onVisibleRChange(math.floor(Value.R * 255)) end
-            if callbacks.onVisibleGChange then callbacks.onVisibleGChange(math.floor(Value.G * 255)) end
-            if callbacks.onVisibleBChange then callbacks.onVisibleBChange(math.floor(Value.B * 255)) end
-        end
-    })
-
-    SecESP:AddColorPicker({
-        text = "Hidden ESP Color",
-        flag = "HiddenColorPicker",
-        color = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
-        callback = function(Value)
-            if callbacks.onHiddenRChange then callbacks.onHiddenRChange(math.floor(Value.R * 255)) end
-            if callbacks.onHiddenGChange then callbacks.onHiddenGChange(math.floor(Value.G * 255)) end
-            if callbacks.onHiddenBChange then callbacks.onHiddenBChange(math.floor(Value.B * 255)) end
-        end
-    })
-
-    SecESP:AddToggle({
-        text = "Fullbright",
-        flag = "FullBrightToggle",
-        state = config.fullBrightEnabled or false,
-        callback = function(Value)
-            if callbacks.onFullBrightToggle then callbacks.onFullBrightToggle(Value) end
-        end
-    })
-
-    local SecPerf = TabVisuals:AddSection("Performance", 2, 1)
-
-    SecPerf:AddSlider({
-        text = "NPC Range",
-        flag = "NPCRangeSlider",
-        min = 0,
-        max = config.MAX_NPC_DETECTION_RADIUS or 5000,
-        value = config.npcDetectionRadius or 1000,
-        suffix = " studs",
-        callback = function(Value)
-            if callbacks.onNPCDetectionRadiusChange then callbacks.onNPCDetectionRadiusChange(Value) end
-        end
-    })
-
-    SecPerf:AddLabel({
-        text = "Optimization Tip: If experiencing FPS drops, lower NPC Range. Gradually increase until optimal performance is achieved."
-    })
-
-    -- ====================
-    -- WEAPONS TAB
-    -- ====================
-    local SecGunMods = TabWeapons:AddSection("Gun Modifiers", 1, 1)
-
-    SecGunMods:AddLabel({
-        text = "Notice: Reset character to apply!"
-    })
-
-    SecGunMods:AddToggle({
+    WeaponsSection:AddToggle({
         text = "No Recoil",
         flag = "NoRecoilToggle",
         state = (config.patchOptions and config.patchOptions.recoil) or false,
@@ -153,7 +83,7 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    SecGunMods:AddToggle({
+    WeaponsSection:AddToggle({
         text = "All Firemodes",
         flag = "AllFiremodesToggle",
         state = (config.patchOptions and config.patchOptions.firemodes) or false,
@@ -162,78 +92,113 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    -- ====================
-    -- SETTINGS TAB
-    -- ====================
-    local SecMenu = TabSettings:AddSection("Menu Control", 1, 1)
+    -- =========================================================================
+    -- COLUMN 2: VISUALS & SETTINGS
+    -- =========================================================================
 
-    SecMenu:AddButton({
+    -- --- Visuals Section ---
+    local VisualsSection = MainTab:AddSection("Visuals & Lighting", 2)
+
+    local espToggle = VisualsSection:AddToggle({
+        text = "ESP / Wallhack",
+        flag = "ESPToggle",
+        state = config.highlightEnabled or false,
+        callback = function(Value)
+            if callbacks.onHighlightsToggle then callbacks.onHighlightsToggle(Value) end
+        end
+    })
+
+    -- Attached Visible & Hidden ColorPickers directly to the ESP toggle
+    espToggle:AddColor({
+        text = "Visible Color",
+        color = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
+        flag = "VisibleColorPicker",
+        callback = function(Value)
+            if callbacks.onVisibleRChange then callbacks.onVisibleRChange(math.floor(Value.R * 255)) end
+            if callbacks.onVisibleGChange then callbacks.onVisibleGChange(math.floor(Value.G * 255)) end
+            if callbacks.onVisibleBChange then callbacks.onVisibleBChange(math.floor(Value.B * 255)) end
+        end
+    })
+
+    espToggle:AddColor({
+        text = "Hidden Color",
+        color = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
+        flag = "HiddenColorPicker",
+        callback = function(Value)
+            if callbacks.onHiddenRChange then callbacks.onHiddenRChange(math.floor(Value.R * 255)) end
+            if callbacks.onHiddenGChange then callbacks.onHiddenGChange(math.floor(Value.G * 255)) end
+            if callbacks.onHiddenBChange then callbacks.onHiddenBChange(math.floor(Value.B * 255)) end
+        end
+    })
+
+    VisualsSection:AddToggle({
+        text = "Fullbright",
+        flag = "FullBrightToggle",
+        state = config.fullBrightEnabled or false,
+        callback = function(Value)
+            if callbacks.onFullBrightToggle then callbacks.onFullBrightToggle(Value) end
+        end
+    })
+
+    VisualsSection:AddSlider({
+        text = "NPC Detection Range",
+        flag = "NPCRangeSlider",
+        min = 0,
+        max = config.MAX_NPC_DETECTION_RADIUS or 5000,
+        value = config.npcDetectionRadius or 1000,
+        increment = 50,
+        suffix = " studs",
+        callback = function(Value)
+            if callbacks.onNPCDetectionRadiusChange then callbacks.onNPCDetectionRadiusChange(Value) end
+        end
+    })
+
+    VisualsSection:AddText({text = "Tip: Lower range if experiencing FPS drops."})
+
+    -- --- Settings Section ---
+    local SettingsSection = MainTab:AddSection("Menu & Utilities", 2)
+
+    SettingsSection:AddButton({
         text = "Fix Camera Lock",
         callback = function()
             UserInputService.MouseBehavior = Enum.MouseBehavior.Default
             LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
             task.wait(0.05)
             LocalPlayer.CameraMode = Enum.CameraMode.Classic
-
-            if library.SendNotification then
-                library:SendNotification({
-                    Title = "Camera Fixed",
-                    Text = "Mouse and camera lock have been successfully reset.",
-                    Duration = 2
-                })
-            end
+            Library:SendNotification("Mouse & camera lock reset successfully.", 3)
         end
     })
 
-    SecMenu:AddButton({
-        text = "Unload Script",
-        callback = function()
-            self:destroy()
-            if callbacks.onUnload then callbacks.onUnload() end
-        end
-    })
-
-    local SecCredits = TabSettings:AddSection("Credits & Links", 2, 1)
-
-    SecCredits:AddButton({
+    SettingsSection:AddButton({
         text = "Copy Discord Link",
         callback = function()
             if type(setclipboard) == "function" then
                 setclipboard("https://discord.gg/yourlink")
-                if library.SendNotification then
-                    library:SendNotification({
-                        Title = "Clipboard",
-                        Text = "Invite link copied successfully!",
-                        Duration = 3
-                    })
-                end
+                Library:SendNotification("Discord invite copied to clipboard!", 3)
             else
-                if library.SendNotification then
-                    library:SendNotification({
-                        Title = "Clipboard Error",
-                        Text = "Executor does not support setclipboard.",
-                        Duration = 3
-                    })
-                end
+                Library:SendNotification("Executor does not support setclipboard.", 3)
             end
         end
     })
 
-    if Window.SetOpen then
-        Window:SetOpen(true)
-    elseif library.SetOpen then
-        library:SetOpen(true)
-    end
+    SettingsSection:AddButton({
+        text = "Unload Script",
+        callback = function()
+            if self.Library then
+                self.Library:Unload()
+            end
+            if callbacks.onUnload then callbacks.onUnload() end
+        end
+    })
+
+    Library:SendNotification("BRM5 Script Loaded Successfully!", 3)
 end
 
 function GUI:setVisibleState(isVisible)
     self.IsOpen = isVisible
-    if self.Window and self.Window.SetOpen then
-        self.Window:SetOpen(isVisible)
-    elseif self.Library and self.Library.SetOpen then
+    if self.Library then
         self.Library:SetOpen(isVisible)
     end
-
     if not isVisible then
         task.defer(function()
             UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -242,16 +207,15 @@ function GUI:setVisibleState(isVisible)
 end
 
 function GUI:toggleVisibility()
-    self.IsOpen = not self.IsOpen
-    self:setVisibleState(self.IsOpen)
+    if self.Library then
+        self:setVisibleState(not self.IsOpen)
+    end
 end
 
 function GUI:destroy()
-    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-    if self.Library and self.Library.Unload then
+    if self.Library then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         self.Library:Unload()
-    elseif self.Window and self.Window.Destroy then
-        self.Window:Destroy()
     end
 end
 
