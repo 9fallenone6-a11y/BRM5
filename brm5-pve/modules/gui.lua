@@ -37,8 +37,10 @@ function GUI:init(services, config, callbacks)
     end
 
     self.Menu = menu
-    local targetWidth = 500  -- Adjust width as needed
-    local targetHeight = 500 -- Adjust height as needed
+    
+    -- 🔧 GUI Size Enforced to 500x500
+    local targetWidth = 500 
+    local targetHeight = 500 
     menu.bg.Size = UDim2.new(0, targetWidth, 0, targetHeight)
     menu.bg.Position = UDim2.new(0.5, -targetWidth / 2, 0.5, -targetHeight / 2)
 
@@ -54,7 +56,6 @@ function GUI:init(services, config, callbacks)
     if current:FindFirstChild("main") then
         current.main.Size = UDim2.new(1, 0, 1, -25) -- Leaves space for top tab buttons
     end
-    menu.bg.Position = UDim2.new(0.5, -menu.bg.Size.X.Offset / 2, 0.5, -menu.bg.Size.Y.Offset / 2)
     menu.bg.pre.Text = 'Blackhawk Rescue Mission 5 <font color="#c375ae">| by 9fallenone6</font>'
 
     -- 2. Library Setup
@@ -66,7 +67,13 @@ function GUI:init(services, config, callbacks)
         multiZindex = 200, toInvis = {},
         libColor = Color3.fromRGB(192, 118, 227),
         disabledcolor = Color3.fromRGB(233, 0, 0),
-        blacklisted = {Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.UserInputType.MouseMovement}
+        blacklisted = {Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.UserInputType.MouseMovement},
+        -- 🎨 Theme Objects Tracker for Dynamic Color Updates
+        themeObjects = {
+            toggles = {},
+            sliders = {},
+            elements = {}
+        }
     }
     self.Library = library
 
@@ -102,20 +109,6 @@ function GUI:init(services, config, callbacks)
 
     local tabholder = menu.bg.bg.bg.bg.main.group
     local tabviewer = menu.bg.bg.bg.bg.tabbuttons
-
-    -- Keybind mapping helper
-    local keyNames = {
-        [Enum.KeyCode.LeftAlt] = 'LALT', [Enum.KeyCode.RightAlt] = 'RALT',
-        [Enum.KeyCode.LeftControl] = 'LCTRL', [Enum.KeyCode.RightControl] = 'RCTRL',
-        [Enum.KeyCode.LeftShift] = 'LSHIFT', [Enum.KeyCode.RightShift] = 'RSHIFT',
-        [Enum.KeyCode.Underscore] = '_', [Enum.KeyCode.Minus] = '-',
-        [Enum.KeyCode.Plus] = '+', [Enum.KeyCode.Period] = '.',
-        [Enum.KeyCode.Slash] = '/', [Enum.KeyCode.BackSlash] = '\\',
-        [Enum.KeyCode.Question] = '?',
-        [Enum.UserInputType.MouseButton1] = 'MB1',
-        [Enum.UserInputType.MouseButton2] = 'MB2',
-        [Enum.UserInputType.MouseButton3] = 'MB3',
-    }
 
     library.notifyText.Font = 2
     library.notifyText.Size = 13
@@ -176,7 +169,9 @@ function GUI:init(services, config, callbacks)
             groupbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             groupbox.BorderColor3 = Color3.fromRGB(30, 30, 30)
             groupbox.BorderSizePixel = 2
-            groupbox.Size = UDim2.new(0, 211, 0, 8)
+            
+            -- Widened for 500px Frame (from 211 to 235)
+            groupbox.Size = UDim2.new(0, 235, 0, 8)
             groupbox.ZIndex = groupCount
 
             grouper.Parent = groupbox
@@ -197,6 +192,7 @@ function GUI:init(services, config, callbacks)
             element.BackgroundColor3 = library.libColor
             element.BorderSizePixel = 0
             element.Size = UDim2.new(1, 0, 0, 1)
+            table.insert(library.themeObjects.elements, element)
 
             title.Parent = groupbox
             title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -260,6 +256,8 @@ function GUI:init(services, config, callbacks)
                 front.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
                 front.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 front.Size = UDim2.new(0, 10, 0, 10)
+                
+                table.insert(library.themeObjects.toggles, {front = front, flag = args.flag})
 
                 text.Name = "text"
                 text.Parent = toggleframe
@@ -318,7 +316,7 @@ function GUI:init(services, config, callbacks)
                 bg.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 bg.BorderSizePixel = 2
                 bg.Position = UDim2.new(0.02, -1, 0, 0)
-                bg.Size = UDim2.new(0, 205, 0, 15)
+                bg.Size = UDim2.new(0, 222, 0, 15) -- Widened
 
                 main.Name = "main"
                 main.Parent = bg
@@ -370,7 +368,7 @@ function GUI:init(services, config, callbacks)
                 bg.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 bg.BorderSizePixel = 2
                 bg.Position = UDim2.new(0.02, -1, 0, 16)
-                bg.Size = UDim2.new(0, 205, 0, 10)
+                bg.Size = UDim2.new(0, 222, 0, 10) -- Widened
 
                 main.Name = "main"
                 main.Parent = bg
@@ -384,6 +382,7 @@ function GUI:init(services, config, callbacks)
                 fill.BackgroundTransparency = 0.200
                 fill.BorderSizePixel = 0
                 fill.Size = UDim2.new(0, 0, 1, 0)
+                table.insert(library.themeObjects.sliders, fill)
 
                 button.Name = "button"
                 button.Parent = main
@@ -520,7 +519,7 @@ function GUI:init(services, config, callbacks)
                 button.Name = "button"
                 button.Parent = colorpicker
                 button.BackgroundTransparency = 1.000
-                button.Size = UDim2.new(0, 202, 0, 22)
+                button.Size = UDim2.new(0, 222, 0, 22) -- Widened
                 button.Text = ""
 
                 colorFrame.Name = "colorFrame"
@@ -668,8 +667,9 @@ function GUI:init(services, config, callbacks)
 
     -- 3. Construct Pages and Controls
     local mainTab = library:addTab("Main")
+    local configTab = library:addTab("Config") -- 🎨 Config Tab Added
 
-    -- Left Column: Combat & Weapons
+    -- Left Column (Main): Combat & Weapons
     local combatGroup  = mainTab:createGroup("left", "Combat")
     local weaponsGroup = mainTab:createGroup("left", "Weapons")
 
@@ -705,9 +705,8 @@ function GUI:init(services, config, callbacks)
         end
     })
 
-    -- Right Column: Visuals & Settings
-    local visualsGroup   = mainTab:createGroup("right", "Visuals & Lighting")
-    local utilitiesGroup = mainTab:createGroup("right", "Menu & Utilities")
+    -- Right Column (Main): Visuals & Settings
+    local visualsGroup = mainTab:createGroup("right", "Visuals & Lighting")
 
     visualsGroup:addToggle({
         text = "ESP / Wallhack",
@@ -758,7 +757,35 @@ function GUI:init(services, config, callbacks)
         end
     }, " studs")
 
-    utilitiesGroup:addButton({
+    -- Left Column (Config): Theme Settings
+    local themeGroup = configTab:createGroup("left", "Theme & Customization")
+    local utilsGroup = configTab:createGroup("right", "Menu & Utilities")
+    
+    themeGroup:addColorpicker({
+        text = "UI Accent Color",
+        flag = "config/ui_color",
+        color = library.libColor,
+        callback = function(newColor)
+            library.libColor = newColor
+            
+            -- Dynamically update all registered GUI elements
+            for _, element in pairs(library.themeObjects.elements) do
+                element.BackgroundColor3 = newColor
+            end
+            
+            for _, sliderFill in pairs(library.themeObjects.sliders) do
+                sliderFill.BackgroundColor3 = newColor
+            end
+            
+            for _, toggleData in pairs(library.themeObjects.toggles) do
+                if library.flags[toggleData.flag] then
+                    toggleData.front.BackgroundColor3 = newColor
+                end
+            end
+        end
+    })
+
+    utilsGroup:addButton({
         text = "Unload Script",
         callback = function()
             self:destroy()
