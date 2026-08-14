@@ -717,20 +717,19 @@ function library:init()
 
     -- Replace direct CoreGui indexing with this safe parent resolution:
 local function getSafeUIParent()
-    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    local success, coreGui = pcall(function() 
+        return game:GetService("CoreGui") 
+    end)
     if success and coreGui then
         return coreGui
     end
-    
-    local player = game:GetService("Players").LocalPlayer
-    if player then
-        return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 5)
-    end
-    
-    return nil
+
+    local players = game:GetService("Players")
+    local localPlayer = players.LocalPlayer or players.PlayerAdded:Wait()
+    return localPlayer:WaitForChild("PlayerGui")
 end
 
-    local screenGui = Instance.new('ScreenGui');
+    local Gui = Instance.new('ScreenGui');
     if syn then syn.protect_gui(screenGui); end
     screenGui.Parent = (gethui and gethui()) or getSafeUIParent();
     screenGui.Enabled = true;
