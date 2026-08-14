@@ -1,9 +1,14 @@
 -- GUI Module (Rayfield Version)
 -- Creates and manages a professional user interface using Rayfield UI Library
 
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
 local GUI = {}
 GUI.Rayfield = nil
 GUI.Window = nil
+GUI.IsOpen = true -- Tracks window state to handle camera locking properly
 
 function GUI:init(services, config, callbacks)
     -- 1. Load Rayfield Library safely
@@ -112,7 +117,7 @@ function GUI:init(services, config, callbacks)
     })
 
     TabVisuals:CreateToggle({
-        Name = "Fullbight",
+        Name = "Fullbright",
         CurrentValue = config.fullBrightEnabled or false,
         Flag = "FullBrightToggle",
         Callback = function(Value)
@@ -173,6 +178,22 @@ function GUI:init(services, config, callbacks)
     TabSettings:CreateSection("Menu Control")
 
     TabSettings:CreateButton({
+        Name = "Fix Camera Lock",
+        Callback = function()
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+            task.wait(0.05)
+            LocalPlayer.CameraMode = Enum.CameraMode.Classic
+            Rayfield:Notify({
+                Title = "Camera Fixed",
+                Content = "Mouse and camera lock have been successfully reset.",
+                Duration = 2,
+                Image = 4483362458
+            })
+        end,
+    })
+
+    TabSettings:CreateButton({
         Name = "Unload Script",
         Callback = function()
             Rayfield:Destroy()
@@ -208,15 +229,30 @@ function GUI:init(services, config, callbacks)
 end
 
 function GUI:setVisibleState(isVisible)
-    -- Rayfield manages visibility internally via keybinds or explicit calls
+    self.IsOpen = isVisible
+    if not isVisible then
+        task.defer(function()
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        end)
+    end
 end
 
 function GUI:toggleVisibility()
-    -- Rayfield handles visibility globally via its toggle bind/key
+    if self.Rayfield then
+        self.Rayfield:ToggleWindow()
+        self.IsOpen = not self.IsOpen
+        
+        if not self.IsOpen then
+            task.defer(function()
+                UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            end)
+        end
+    end
 end
 
 function GUI:destroy()
     if self.Rayfield then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         self.Rayfield:Destroy()
     end
 end
