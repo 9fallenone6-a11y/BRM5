@@ -53,6 +53,25 @@ function GUI:init(services, config, callbacks)
     }
     self.Library = library
 
+    -- Adjust overall window size and bring layout columns closer together
+    local mainFrame = menu.bg.bg.bg.bg.main
+    mainFrame.Size = UDim2.new(0, 400, 0, 275) -- Reduced width and height to snugly fit the sections[cite: 1]
+
+    local leftCol = mainFrame.group.left
+    local rightCol = mainFrame.group.right
+
+    if leftCol and leftCol:IsA("UIListLayout") then
+        leftCol.Padding = UDim.new(0, 6)
+    end
+    if rightCol and rightCol:IsA("UIListLayout") then
+        rightCol.Padding = UDim.new(0, 6)
+    end
+
+    local columnsLayout = mainFrame.group.UIListLayout
+    if columnsLayout then
+        columnsLayout.Padding = UDim.new(0, 10) -- Brought the two sections closer together[cite: 1]
+    end
+
     -- Make Menu Draggable
     local function makeDraggable(frame)
         local dragging, dragInput, dragStart, startPos
@@ -159,7 +178,7 @@ function GUI:init(services, config, callbacks)
             groupbox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             groupbox.BorderColor3 = Color3.fromRGB(30, 30, 30)
             groupbox.BorderSizePixel = 2
-            groupbox.Size = UDim2.new(0, 211, 0, 8)
+            groupbox.Size = UDim2.new(0, 190, 0, 8) -- Reduced groupbox width to match smaller layout
             groupbox.ZIndex = groupCount
 
             grouper.Parent = groupbox
@@ -301,7 +320,7 @@ function GUI:init(services, config, callbacks)
                 bg.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 bg.BorderSizePixel = 2
                 bg.Position = UDim2.new(0.02, -1, 0, 0)
-                bg.Size = UDim2.new(0, 205, 0, 15)
+                bg.Size = UDim2.new(0, 184, 0, 15) -- Scaled button background to fit smaller width
 
                 main.Name = "main"
                 main.Parent = bg
@@ -353,7 +372,7 @@ function GUI:init(services, config, callbacks)
                 bg.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 bg.BorderSizePixel = 2
                 bg.Position = UDim2.new(0.02, -1, 0, 16)
-                bg.Size = UDim2.new(0, 205, 0, 10)
+                bg.Size = UDim2.new(0, 184, 0, 10) -- Scaled slider background to fit smaller width
 
                 main.Name = "main"
                 main.Parent = bg
@@ -503,7 +522,7 @@ function GUI:init(services, config, callbacks)
                 button.Name = "button"
                 button.Parent = colorpicker
                 button.BackgroundTransparency = 1.000
-                button.Size = UDim2.new(0, 202, 0, 22)
+                button.Size = UDim2.new(0, 184, 0, 22) -- Scaled to fit smaller group width
                 button.Text = ""
 
                 colorFrame.Name = "colorFrame"
