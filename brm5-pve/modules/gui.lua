@@ -37,7 +37,23 @@ function GUI:init(services, config, callbacks)
     end
 
     self.Menu = menu
-    menu.bg.Size = UDim2.new(0, 380, 0, 260) 
+    local targetWidth = 500  -- Adjust width as needed
+    local targetHeight = 500 -- Adjust height as needed
+    menu.bg.Size = UDim2.new(0, targetWidth, 0, targetHeight)
+    menu.bg.Position = UDim2.new(0.5, -targetWidth / 2, 0.5, -targetHeight / 2)
+
+    -- 2. Force inner background containers to fill the new window size
+    local current = menu.bg
+    while current:FindFirstChild("bg") do
+        current = current.bg
+        current.Size = UDim2.new(1, -6, 1, -6)
+        current.Position = UDim2.new(0, 3, 0, 3)
+    end
+
+    -- 3. Adjust the main content viewport area
+    if current:FindFirstChild("main") then
+        current.main.Size = UDim2.new(1, 0, 1, -25) -- Leaves space for top tab buttons
+    end
     menu.bg.Position = UDim2.new(0.5, -menu.bg.Size.X.Offset / 2, 0.5, -menu.bg.Size.Y.Offset / 2)
     menu.bg.pre.Text = 'Blackhawk Rescue Mission 5 <font color="#c375ae">| by 9fallenone6</font>'
 
