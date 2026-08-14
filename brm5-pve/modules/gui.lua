@@ -743,25 +743,6 @@ function GUI:init(services, config, callbacks)
     }, " studs")
 
     utilitiesGroup:addButton({
-        text = "Fix Camera Lock",
-        callback = function()
-            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-            LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
-            task.wait(0.05)
-            LocalPlayer.CameraMode = Enum.CameraMode.Classic
-        end
-    })
-
-    utilitiesGroup:addButton({
-        text = "Copy Discord Link",
-        callback = function()
-            if type(setclipboard) == "function" then
-                setclipboard("https://discord.gg/yourlink")
-            end
-        end
-    })
-
-    utilitiesGroup:addButton({
         text = "Unload Script",
         callback = function()
             self:destroy()
