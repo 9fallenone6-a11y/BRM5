@@ -1,235 +1,239 @@
--- GUI Module (Rayfield Version)
--- Creates and manages a professional user interface using Rayfield UI Library
+-- GUI Module (Octohook Version)
+-- Creates and manages user interface using Octohook UI Library
 
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local GUI = {}
-GUI.Rayfield = nil
+GUI.Library = nil
 GUI.Window = nil
 GUI.IsOpen = true -- Tracks window state to handle camera locking properly
 
 function GUI:init(services, config, callbacks)
-    -- 1. Load Rayfield Library safely
-    local success, Rayfield = pcall(function()
-        return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    config = config or {}
+    callbacks = callbacks or {}
+
+    -- 1. Load Octohook Library safely
+    local success, library = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/portallol/luna/main/src/main.lua"))() 
+            or getgenv().library
     end)
 
-    if not success or not Rayfield then
-        warn("[GUI] Failed to load Rayfield UI library.")
+    if not success or not library then
+        library = getgenv().library
+    end
+
+    if not library then
+        warn("[GUI] Failed to load Octohook UI library.")
         return
     end
 
-    self.Rayfield = Rayfield
+    self.Library = library
+    if library.init then
+        library:init()
+    end
 
     -- 2. Create Window
-    local Window = Rayfield:CreateWindow({
-        Name = "Blackhawk Rescue Mission 5",
-        Icon = 0,
-        LoadingTitle = "Blackhawk Rescue Mission 5",
-        LoadingSubtitle = "by 9fallenone6",
-        Theme = "Default", 
-        
-        DisableRayfieldPrompts = false,
-        DisableBuildWarnings = false,
-
-        ConfigurationSaving = {
-            Enabled = true,
-            FolderName = "BRM5_Script",
-            FileName = "BRM5_Config"
-        },
-
-        Discord = {
-            Enabled = false,
-            Invite = "noinvitelink",
-            RememberJoins = true
-        },
-
-        KeySystem = false,
+    local Window = library.NewWindow({
+        title = "Blackhawk Rescue Mission 5",
+        size = UDim2.new(0, 550, 0, 600),
+        position = UDim2.new(0.5, -275, 0.5, -300)
     })
 
     self.Window = Window
 
     -- 3. Setup Tabs
-    local TabCombat = Window:CreateTab("Combat", 4483362458)
-    local TabVisuals = Window:CreateTab("Visuals", 4483362458)
-    local TabWeapons = Window:CreateTab("Weapons", 4483362458)
-    local TabSettings = Window:CreateTab("Settings", 4483362458)
+    local TabCombat = Window:AddTab("Combat")
+    local TabVisuals = Window:AddTab("Visuals")
+    local TabWeapons = Window:AddTab("Weapons")
+    local TabSettings = Window:AddTab("Settings")
 
     -- ====================
     -- COMBAT TAB
     -- ====================
-    TabCombat:CreateSection("Target Settings")
+    local SecTarget = TabCombat:AddSection("Target Settings", 1, 1)
 
-    TabCombat:CreateToggle({
-        Name = "Silent Target",
-        CurrentValue = config.sizingEnabled or false,
-        Flag = "SilentTargetToggle",
-        Callback = function(Value)
+    SecTarget:AddToggle({
+        text = "Silent Target",
+        flag = "SilentTargetToggle",
+        state = config.sizingEnabled or false,
+        callback = function(Value)
             if callbacks.onSizingToggle then callbacks.onSizingToggle(Value) end
-        end,
+        end
     })
 
-    TabCombat:CreateToggle({
-        Name = "Show HitBox",
-        CurrentValue = config.showTargetBox or false,
-        Flag = "ShowHitBoxToggle",
-        Callback = function(Value)
+    SecTarget:AddToggle({
+        text = "Show HitBox",
+        flag = "ShowHitBoxToggle",
+        state = config.showTargetBox or false,
+        callback = function(Value)
             if callbacks.onShowTargetBoxToggle then callbacks.onShowTargetBoxToggle(Value) end
-        end,
+        end
     })
 
     -- ====================
     -- VISUALS TAB
     -- ====================
-    TabVisuals:CreateSection("ESP & Lighting")
+    local SecESP = TabVisuals:AddSection("ESP & Lighting", 1, 1)
 
-    TabVisuals:CreateToggle({
-        Name = "ESP / Wallhack",
-        CurrentValue = config.highlightEnabled or false,
-        Flag = "ESPToggle",
-        Callback = function(Value)
+    SecESP:AddToggle({
+        text = "ESP / Wallhack",
+        flag = "ESPToggle",
+        state = config.highlightEnabled or false,
+        callback = function(Value)
             if callbacks.onHighlightsToggle then callbacks.onHighlightsToggle(Value) end
-        end,
+        end
     })
 
-    TabVisuals:CreateColorPicker({
-        Name = "Visible ESP Color",
-        Color = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
-        Flag = "VisibleColorPicker",
-        Callback = function(Value)
+    SecESP:AddColorPicker({
+        text = "Visible ESP Color",
+        flag = "VisibleColorPicker",
+        color = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
+        callback = function(Value)
             if callbacks.onVisibleRChange then callbacks.onVisibleRChange(math.floor(Value.R * 255)) end
             if callbacks.onVisibleGChange then callbacks.onVisibleGChange(math.floor(Value.G * 255)) end
             if callbacks.onVisibleBChange then callbacks.onVisibleBChange(math.floor(Value.B * 255)) end
         end
     })
 
-    TabVisuals:CreateColorPicker({
-        Name = "Hidden ESP Color",
-        Color = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
-        Flag = "HiddenColorPicker",
-        Callback = function(Value)
+    SecESP:AddColorPicker({
+        text = "Hidden ESP Color",
+        flag = "HiddenColorPicker",
+        color = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
+        callback = function(Value)
             if callbacks.onHiddenRChange then callbacks.onHiddenRChange(math.floor(Value.R * 255)) end
             if callbacks.onHiddenGChange then callbacks.onHiddenGChange(math.floor(Value.G * 255)) end
             if callbacks.onHiddenBChange then callbacks.onHiddenBChange(math.floor(Value.B * 255)) end
         end
     })
 
-    TabVisuals:CreateToggle({
-        Name = "Fullbright",
-        CurrentValue = config.fullBrightEnabled or false,
-        Flag = "FullBrightToggle",
-        Callback = function(Value)
+    SecESP:AddToggle({
+        text = "Fullbright",
+        flag = "FullBrightToggle",
+        state = config.fullBrightEnabled or false,
+        callback = function(Value)
             if callbacks.onFullBrightToggle then callbacks.onFullBrightToggle(Value) end
-        end,
+        end
     })
 
-    TabVisuals:CreateSection("Performance")
+    local SecPerf = TabVisuals:AddSection("Performance", 2, 1)
 
-    TabVisuals:CreateSlider({
-        Name = "NPC Range",
-        Range = {0, config.MAX_NPC_DETECTION_RADIUS or 5000},
-        Increment = 50,
-        Suffix = " studs",
-        CurrentValue = config.npcDetectionRadius or 1000,
-        Flag = "NPCRangeSlider",
-        Callback = function(Value)
+    SecPerf:AddSlider({
+        text = "NPC Range",
+        flag = "NPCRangeSlider",
+        min = 0,
+        max = config.MAX_NPC_DETECTION_RADIUS or 5000,
+        value = config.npcDetectionRadius or 1000,
+        suffix = " studs",
+        callback = function(Value)
             if callbacks.onNPCDetectionRadiusChange then callbacks.onNPCDetectionRadiusChange(Value) end
-        end,
+        end
     })
 
-    TabVisuals:CreateParagraph({
-        Title = "Optimization Tip", 
-        Content = "If experiencing FPS drops, lower NPC Range. Gradually increase until optimal performance is achieved."
+    SecPerf:AddLabel({
+        text = "Optimization Tip: If experiencing FPS drops, lower NPC Range. Gradually increase until optimal performance is achieved."
     })
 
     -- ====================
     -- WEAPONS TAB
     -- ====================
-    TabWeapons:CreateSection("Gun Modifiers")
+    local SecGunMods = TabWeapons:AddSection("Gun Modifiers", 1, 1)
 
-    TabWeapons:CreateParagraph({
-        Title = "Notice",
-        Content = "Reset character to apply!"
+    SecGunMods:AddLabel({
+        text = "Notice: Reset character to apply!"
     })
 
-    TabWeapons:CreateToggle({
-        Name = "No Recoil",
-        CurrentValue = config.patchOptions and config.patchOptions.recoil or false,
-        Flag = "NoRecoilToggle",
-        Callback = function(Value)
+    SecGunMods:AddToggle({
+        text = "No Recoil",
+        flag = "NoRecoilToggle",
+        state = (config.patchOptions and config.patchOptions.recoil) or false,
+        callback = function(Value)
             if callbacks.onStabilityToggle then callbacks.onStabilityToggle(Value) end
-        end,
+        end
     })
 
-    TabWeapons:CreateToggle({
-        Name = "All Firemodes",
-        CurrentValue = config.patchOptions and config.patchOptions.firemodes or false,
-        Flag = "AllFiremodesToggle",
-        Callback = function(Value)
+    SecGunMods:AddToggle({
+        text = "All Firemodes",
+        flag = "AllFiremodesToggle",
+        state = (config.patchOptions and config.patchOptions.firemodes) or false,
+        callback = function(Value)
             if callbacks.onFiremodeOptionsToggle then callbacks.onFiremodeOptionsToggle(Value) end
-        end,
+        end
     })
 
     -- ====================
     -- SETTINGS TAB
     -- ====================
-    TabSettings:CreateSection("Menu Control")
+    local SecMenu = TabSettings:AddSection("Menu Control", 1, 1)
 
-    TabSettings:CreateButton({
-        Name = "Fix Camera Lock",
-        Callback = function()
+    SecMenu:AddButton({
+        text = "Fix Camera Lock",
+        callback = function()
             UserInputService.MouseBehavior = Enum.MouseBehavior.Default
             LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
             task.wait(0.05)
             LocalPlayer.CameraMode = Enum.CameraMode.Classic
-            Rayfield:Notify({
-                Title = "Camera Fixed",
-                Content = "Mouse and camera lock have been successfully reset.",
-                Duration = 2,
-                Image = 4483362458
-            })
-        end,
-    })
 
-    TabSettings:CreateButton({
-        Name = "Unload Script",
-        Callback = function()
-            Rayfield:Destroy()
-            if callbacks.onUnload then callbacks.onUnload() end
-        end,
-    })
-
-    TabSettings:CreateSection("Credits & Links")
-    
-    TabSettings:CreateButton({
-        Name = "Copy Discord Link",
-        Callback = function()
-            if type(setclipboard) == "function" then
-                setclipboard("https://discord.gg/yourlink")
-                Rayfield:Notify({
-                    Title = "Clipboard",
-                    Content = "Invite link copied successfully!",
-                    Duration = 3,
-                    Image = 4483362458
-                })
-            else
-                Rayfield:Notify({
-                    Title = "Clipboard Error",
-                    Content = "Executor does not support setclipboard.",
-                    Duration = 3,
-                    Image = 4483362458
+            if library.SendNotification then
+                library:SendNotification({
+                    Title = "Camera Fixed",
+                    Text = "Mouse and camera lock have been successfully reset.",
+                    Duration = 2
                 })
             end
-        end,
+        end
     })
 
-    Rayfield:LoadConfiguration()
+    SecMenu:AddButton({
+        text = "Unload Script",
+        callback = function()
+            self:destroy()
+            if callbacks.onUnload then callbacks.onUnload() end
+        end
+    })
+
+    local SecCredits = TabSettings:AddSection("Credits & Links", 2, 1)
+
+    SecCredits:AddButton({
+        text = "Copy Discord Link",
+        callback = function()
+            if type(setclipboard) == "function" then
+                setclipboard("https://discord.gg/yourlink")
+                if library.SendNotification then
+                    library:SendNotification({
+                        Title = "Clipboard",
+                        Text = "Invite link copied successfully!",
+                        Duration = 3
+                    })
+                end
+            else
+                if library.SendNotification then
+                    library:SendNotification({
+                        Title = "Clipboard Error",
+                        Text = "Executor does not support setclipboard.",
+                        Duration = 3
+                    })
+                end
+            end
+        end
+    })
+
+    if Window.SetOpen then
+        Window:SetOpen(true)
+    elseif library.SetOpen then
+        library:SetOpen(true)
+    end
 end
 
 function GUI:setVisibleState(isVisible)
     self.IsOpen = isVisible
+    if self.Window and self.Window.SetOpen then
+        self.Window:SetOpen(isVisible)
+    elseif self.Library and self.Library.SetOpen then
+        self.Library:SetOpen(isVisible)
+    end
+
     if not isVisible then
         task.defer(function()
             UserInputService.MouseBehavior = Enum.MouseBehavior.Default
@@ -238,22 +242,16 @@ function GUI:setVisibleState(isVisible)
 end
 
 function GUI:toggleVisibility()
-    if self.Rayfield then
-        self.Rayfield:ToggleWindow()
-        self.IsOpen = not self.IsOpen
-        
-        if not self.IsOpen then
-            task.defer(function()
-                UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-            end)
-        end
-    end
+    self.IsOpen = not self.IsOpen
+    self:setVisibleState(self.IsOpen)
 end
 
 function GUI:destroy()
-    if self.Rayfield then
-        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-        self.Rayfield:Destroy()
+    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    if self.Library and self.Library.Unload then
+        self.Library:Unload()
+    elseif self.Window and self.Window.Destroy then
+        self.Window:Destroy()
     end
 end
 
