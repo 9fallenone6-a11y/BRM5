@@ -1,4 +1,209 @@
--- GUI Module (Converted to Seere / Fiji UI Library)
+-- GUI Module (Reworked using Obsidian / Linoria-based UI Library)
+
+local UserInputService = game:GetService("UserInputService")
+local TweenService     = game:GetService("TweenService")
+local Players          = game:GetService("Players")
+local LocalPlayer      = Players.LocalPlayer
+
+local GUI = {}
+GUI.Library = nil
+GUI.Window = nil
+GUI.IsOpen = true
+
+function GUI:init(services, config, callbacks)
+    config = config or {}
+    callbacks = callbacks or {}
+
+    -- 1. Load Obsidian Library & Addons
+    local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
+    local successLib, Library = pcall(function()
+        return loadstring(game:HttpGet(repo .. "Library.lua"))()
+    end)
+    local successTheme, ThemeManager = pcall(function()
+        return loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+    end)
+    local successSave, SaveManager = pcall(function()
+        return loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+    end)
+
+    if not successLib or not Library then
+        warn("[GUI] Failed to load Obsidian Library.")
+        return
+    end
+
+    self.Library = Library
+
+    -- 2. Create Window (Compact layout sized to neatly hold smaller dual columns)
+    local Window = Library:CreateWindow({
+        Title = "Blackhawk Rescue Mission 5 | by 9fallenone6",
+        Footer = "Obsidian UI",
+        Icon = 95816097006870,
+        NotifySide = "Right",
+        ShowCustomCursor = true,
+        Size = UDim2.new(0, 410, 0, 300),
+        Center = true,
+        AutoShow = true,
+        Resizable = false,
+    })
+
+    self.Window = Window
+
+    -- 3. Construct Tabs
+    local Tabs = {
+        Main = Window:AddTab("Main", "user"),
+        Settings = Window:AddTab("UI Settings", "settings"),
+    }
+
+    -- Groupboxes (Split side-by-side into Left and Right columns)
+    local CombatGroup = Tabs.Main:AddLeftGroupbox("Combat", "sword")
+    local WeaponsGroup = Tabs.Main:AddLeftGroupbox("Weapons", "crosshair")
+
+    local VisualsGroup = Tabs.Main:AddRightGroupbox("Visuals & Lighting", "eye")
+    local UtilitiesGroup = Tabs.Main:AddRightGroupbox("Menu & Utilities", "wrench")
+
+    -- 4. Combat Elements
+    CombatGroup:AddToggle("SilentTargetToggle", {
+        Text = "Silent Target",
+        Default = config.sizingEnabled or false,
+        Callback = function(Value)
+            if callbacks.onSizingToggle then callbacks.onSizingToggle(Value) end
+        end
+    })
+
+    CombatGroup:AddToggle("ShowHitboxToggle", {
+        Text = "Show HitBox",
+        Default = config.showTargetBox or false,
+        Callback = function(Value)
+            if callbacks.onShowTargetBoxToggle then callbacks.onShowTargetBoxToggle(Value) end
+        end
+    })
+
+    -- 5. Weapons Elements
+    WeaponsGroup:AddToggle("NoRecoilToggle", {
+        Text = "No Recoil",
+        Default = (config.patchOptions and config.patchOptions.recoil) or false,
+        Callback = function(Value)
+            if callbacks.onStabilityToggle then callbacks.onStabilityToggle(Value) end
+        end
+    })
+
+    WeaponsGroup:AddToggle("AllFiremodesToggle", {
+        Text = "All Firemodes",
+        Default = (config.patchOptions and config.patchOptions.firemodes) or false,
+        Callback = function(Value)
+            if callbacks.onFiremodeOptionsToggle then callbacks.onFiremodeOptionsToggle(Value) end
+        end
+    })
+
+    -- 6. Visuals & Lighting Elements
+    VisualsGroup:AddToggle("ESPToggle", {
+        Text = "ESP / Wallhack",
+        Default = config.highlightEnabled or false,
+        Callback = function(Value)
+            if callbacks.onHighlightsToggle then callbacks.onHighlightsToggle(Value) end
+        end
+    })
+
+    VisualsGroup:AddLabel("Visible Color"):AddColorPicker("VisibleColorPicker", {
+        Default = Color3.fromRGB(config.visibleR or 98, config.visibleG or 209, config.visibleB or 150),
+        Title = "Visible Color",
+        Callback = function(Value)
+            if callbacks.onVisibleRChange then callbacks.onVisibleRChange(math.floor(Value.R * 255)) end
+            if callbacks.onVisibleGChange then callbacks.onVisibleGChange(math.floor(Value.G * 255)) end
+            if callbacks.onVisibleBChange then callbacks.onVisibleBChange(math.floor(Value.B * 255)) end
+        end
+    })
+
+    VisualsGroup:AddLabel("Hidden Color"):AddColorPicker("HiddenColorPicker", {
+        Default = Color3.fromRGB(config.hiddenR or 224, config.hiddenG or 108, config.hiddenB or 117),
+        Title = "Hidden Color",
+        Callback = function(Value)
+            if callbacks.onHiddenRChange then callbacks.onHiddenRChange(math.floor(Value.R * 255)) end
+            if callbacks.onHiddenGChange then callbacks.onHiddenGChange(math.floor(Value.G * 255)) end
+            if callbacks.onHiddenBChange then callbacks.onHiddenBChange(math.floor(Value.B * 255)) end
+        end
+    })
+
+    VisualsGroup:AddToggle("FullbrightToggle", {
+        Text = "Fullbright",
+        Default = config.fullBrightEnabled or false,
+        Callback = function(Value)
+            if callbacks.onFullBrightToggle then callbacks.onFullBrightToggle(Value) end
+        end
+    })
+
+    VisualsGroup:AddSlider("NPCRangeSlider", {
+        Text = "NPC Detection Range",
+        Default = config.npcDetectionRadius or 1000,
+        Min = 0,
+        Max = config.MAX_NPC_DETECTION_RADIUS or 5000,
+        Rounding = 0,
+        Suffix = " studs",
+        Callback = function(Value)
+            if callbacks.onNPCDetectionRadiusChange then callbacks.onNPCDetectionRadiusChange(Value) end
+        end
+    })
+
+    -- 7. Utilities Elements
+    UtilitiesGroup:AddButton("Fix Camera Lock", function()
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+        task.wait(0.05)
+        LocalPlayer.CameraMode = Enum.CameraMode.Classic
+    end)
+
+    UtilitiesGroup:AddButton("Copy Discord Link", function()
+        if type(setclipboard) == "function" then
+            setclipboard("https://discord.gg/yourlink")
+        end
+    end)
+
+    UtilitiesGroup:AddButton("Unload Script", function()
+        GUI:destroy()
+        if callbacks.onUnload then callbacks.onUnload() end
+    end)
+
+    -- 8. Setup Theme and Save Managers if available
+    if ThemeManager then
+        ThemeManager:SetLibrary(Library)
+        ThemeManager:SetFolder("BlackhawkMission5")
+        ThemeManager:ApplyToTab(Tabs.Settings)
+    end
+
+    if SaveManager then
+        SaveManager:SetLibrary(Library)
+        SaveManager:IgnoreThemeSettings()
+        SaveManager:SetIgnoreIndexes({})
+        SaveManager:BuildConfigSection(Tabs.Settings)
+        SaveManager:LoadAutoloadConfig()
+    end
+
+    -- Toggle menu keybind configuration (End key)
+    Library.ToggleKeybind = Enum.KeyCode.End
+    self.IsOpen = true
+end
+
+function GUI:setVisibleState(isVisible)
+    self.IsOpen = isVisible
+    if self.Window then
+        self.Window.Visible = isVisible
+    end
+end
+
+function GUI:toggleVisibility()
+    if self.Window then
+        self.Window:Toggle()
+        self.IsOpen = self.Window.Visible
+    end
+end
+
+function GUI:destroy()
+    if self.Library then
+        self.Library:Unload()
+    end
+end
+
+return GUI-- GUI Module (Converted to Seere / Fiji UI Library)
 
 local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
