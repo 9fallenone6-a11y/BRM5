@@ -37,6 +37,7 @@ function GUI:init(services, config, callbacks)
     end
 
     self.Menu = menu
+    menu.bg.Size = UDim2.new(0, 380, 0, 260) 
     menu.bg.Position = UDim2.new(0.5, -menu.bg.Size.X.Offset / 2, 0.5, -menu.bg.Size.Y.Offset / 2)
     menu.bg.pre.Text = 'Blackhawk Rescue Mission 5 <font color="#c375ae">| by 9fallenone6</font>'
 
