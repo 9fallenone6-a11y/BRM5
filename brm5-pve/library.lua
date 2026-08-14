@@ -715,9 +715,24 @@ function library:init()
         end
     end
 
+    -- Replace direct CoreGui indexing with this safe parent resolution:
+local function getSafeUIParent()
+    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    if success and coreGui then
+        return coreGui
+    end
+    
+    local player = game:GetService("Players").LocalPlayer
+    if player then
+        return player:FindFirstChildOfClass("PlayerGui") or player:WaitForChild("PlayerGui", 5)
+    end
+    
+    return nil
+end
+
     local screenGui = Instance.new('ScreenGui');
     if syn then syn.protect_gui(screenGui); end
-    screenGui.Parent = game:GetService('CoreGui');
+    screenGui.Parent = (gethui and gethui()) or getSafeUIParent();
     screenGui.Enabled = true;
     utility:Instance('ImageButton', {
         Parent = screenGui,
